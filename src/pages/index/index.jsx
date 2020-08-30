@@ -42,16 +42,16 @@ export default class Index extends Component {
     return (
       <View className='container'>
         <Text>问题描述：使用text-overflow 设置Text 显示行数，超过行数显示...， 小程序正常，H5 在Chorme 上正常，在手机以及Safari浏览器上渲染异常，
-        当下面是条件渲染时第一次文字截断没有生效，调整到其它页面返回后，截断正常了
+        当Text是条件渲染时第一次文字截断没有生效，跳转到其它页面返回后，截断正常了
         </Text>
         <Button onClick={()=>{
           Taro.navigateTo({url:'./TestPage'})
         }}
         >跳转到另一个页面</Button>
-        <Text className='text-title'>这一段单行显示正这一段单行显示正常这一段单行显示正常这一段单行显示正常这一段单行显示正常这一段单行显示正常这一段单行显示正常常</Text>
+        <Text className='text-title'></Text>
 
         <ScrollView>
-          {loading ? <Text>正在加载</Text> : this.renderList()}
+          {loading ? <Text>正在加载</Text> : <Text className='text-title'>{title}</Text>}
         </ScrollView>
       </View>
     )
