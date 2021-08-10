@@ -1,5 +1,4 @@
 import { Component } from 'react'
-import Taro from '@tarojs/taro'
 import { connect } from 'react-redux'
 import { View, Button, Text } from '@tarojs/components'
 
@@ -70,14 +69,9 @@ class Index extends Component {
       <View className='index'>
         <Button className='add_btn' onClick={this.props.add}>+</Button>
         <Button className='dec_btn' onClick={this.props.dec}>-</Button>
-        <Button className='dec_btn' onClick={this.props.dec}>-</Button>
-        <Button className='jump_btn' onClick={()=>{
-          Taro.navigateTo({
-            url: '../../pages/index2/index'
-          })
-        }}
-        >Jump Index2</Button>
-        <View><Text className='num_text' id='numTextId'>{num}</Text></View>
+        <Button className='dec_btn' onClick={this.props.asyncAdd}>async</Button>
+        <View><Text className='num_text'>{num}</Text></View>
+        <View><Text className='page_text'>我是第二页</Text></View>
         <View><Text className={textClass}>Hello, World</Text></View>
       </View>
     )
