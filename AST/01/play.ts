@@ -285,3 +285,147 @@ class Parser {
     return null;
   }
 }
+
+abstract class AstVisitor {
+  visitProg(prog: Prog): any {
+    let retVal: any
+    for (let x of prog.stmts) {
+      if (typeof (x as FunctionDecl).body === 'object') {
+        retVal = this.visitFunctionDecl(x as FunctionDecl)
+      } else {
+        retVal = this.visitFunctionCall(x as FunctionCall)
+      }
+    }
+    return retVal
+  }
+
+  visitFunctionDecl(functionDecl: FunctionDecl): any {
+    return this.visitFunctionBody(functionDecl.body)
+  }
+
+  visitFunctionBody(functionBody: FunctionBody): any {
+    let retVal: any
+    for (let x of functionBody.stmts) {
+      retVal = this.visitFunctionCall(x)
+    }
+    return retVal
+  }
+
+  visitFunctionCall(functionCall: FunctionCall): any {
+    return undefined
+  }
+}
+
+
+class RefResolver extends AstVisitor {
+  prog: Prog | null = null
+
+  visitProg(prog: Prog): any {
+    this.prog = prog
+    for (let x of prog.stmts) {
+      let functionCall = x as FunctionCall
+      if (typeof functionCall.parameters === 'object') {
+        this.resolveFunctionCall(prog, functionCall)
+      } else {
+        this.visitFunctionDecl(x as FunctionDecl);
+      }
+    }
+  }
+
+  visitFunctionBody(functionBody: FunctionBody): any {
+    if (this.prog != null) {
+      for (let x of functionBody.stmts) {
+        return this.resolveFunctionCall(this.prog, x);
+      }
+    }
+  }
+
+  resolveFunctionCall(prog: Prog, functionCall: FunctionCall) {
+    let functionDec1 = this.findFunctionDecl(prog, functionCall.name)
+    if (functionDec1 !== null) {
+      functionCall.definition = functionDec1
+    } else {
+      if (functionCall.name !== 'println') {
+        console.log("Error: cannot find definition of function " + functionCall.name);
+      }
+    }
+  }
+
+  private findFunctionDecl(prog: Prog, name: string): FunctionDecl | null {
+    for (let x of prog.stmts) {
+      let functionDec1 = x as FunctionDecl;
+      if (typeof functionDec1.body === 'object' && functionDec1.name === name) {
+        return functionDec1
+      }
+
+    }
+    return null
+  }
+}
+
+// 解释器
+
+/**
+ * 遍历AST，执行函数调用。
+ */
+class Intepretor extends AstVisitor {
+  visitProg(prog: Prog): any {
+    let retVal: any;
+    for (let x of prog.stmts) {
+      let functionCall = x as FunctionCall;
+      if (typeof functionCall.parameters === 'object') {
+        retVal = this.runFunction(functionCall);
+      }
+    }
+    return retVal;
+  }
+
+  visitFunctionBody(functionBody: FunctionBody): any {
+    let retVal: any;
+    for (let x of functionBody.stmts) {
+      retVal = this.runFunction(x);
+    }
+    ;
+  }
+
+  private runFunction(functionCall: FunctionCall) {
+    if (functionCall.name == "println") { //内置函数
+      if (functionCall.parameters.length > 0) {
+        console.log(functionCall.parameters[0]);
+      } else {
+        console.log();
+      }
+      return 0;
+    } else { //找到函数定义，继续遍历函数体
+      if (functionCall.definition != null) {
+        this.visitFunctionBody(functionCall.definition.body);
+      }
+    }
+  }
+}
+
+// 主程序
+
+function compileAndRun() {
+//词法分析
+  let tokenizer = new Tokenizer(tokenArray);
+  console.log("\n程序所使用的Token:");
+  for (let token of tokenArray){
+    console.log(token);
+  }
+  //语法分析
+  let prog:Prog = new Parser(tokenizer).parseProg();
+  console.log("\n语法分析后的AST:");
+  prog.dump("");
+
+  //语义分析
+  new RefResolver().visitProg(prog);
+  console.log("\n语义分析后的AST，注意自定义函数的调用已被消解:");
+  prog.dump("");
+
+  //运行程序
+  console.log("\n运行当前的程序:");
+  let retVal = new Intepretor().visitProg(prog);
+  console.log("程序返回值：" + retVal);
+}
+compileAndRun();
